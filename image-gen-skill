@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """
 Image-Gen-Skill - OpenClaw Universal Image Generator
-多 API 支持图像生成技能 (SiliconFlow + Zhipu AI)
+With Mandatory Constraints (ACP Harness Style)
+
+设计约束 (Design Constraints):
+1. 禁止无用户确认直接生成
+2. 禁止未明确细节直接生成
+3. 禁止未比较模型优势直接选择
+
+这些约束不可绕过，强制执行。
 """
 
 import os
@@ -11,109 +18,368 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-def auto_select_api(prompt: str, style: str = None) -> dict:
-    """Auto-select best API based on prompt characteristics"""
-    has_chinese = any('\u4e00' <= c <= '\u9fff' for c in prompt)
+# =============================================================================
+# 强制约束系统 (Mandatory Constraints)
+# =============================================================================
+
+CONSTRAINTS = {
+    'NO_DIRECT_GENERATE': {
+        'id': 'C001',
+        'description': '禁止无用户确认直接生成',
+        'rule': '必须使用交互式向导，逐项确认风格、构图、细节',
+        'error_msg': '❌ 约束违反 C001: 必须使用 --interactive 模式，不能直接生成'
+    },
+    'NO_VAGUE_PROMPT': {
+        'id': 'C002', 
+        'description': '禁止未明确细节直接生成',
+        'rule': '必须完成风格、构图、氛围、必需要素四步确认',
+        'error_msg': '❌ 约束违反 C002: 细节未明确，无法生成'
+    },
+    'NO_RANDOM_API': {
+        'id': 'C003',
+        'description': '禁止未比较模型优势直接选择',
+        'rule': '必须向用户说明各API优势并获得确认',
+        'error_msg': '❌ 约束违反 C003: 必须比较API优势后由用户确认'
+    }
+}
+
+class ConstraintViolation(Exception):
+    """约束违反异常"""
+    pass
+
+def enforce_constraint(constraint_id: str, condition: bool):
+    """强制执行约束，违反则抛出异常"""
+    if not condition:
+        c = CONSTRAINTS[constraint_id]
+        print(f"\n{'='*60}")
+        print(f"  生成被阻止")
+        print(f"{'='*60}")
+        print(f"\n{c['error_msg']}")
+        print(f"\n📋 约束详情:")
+        print(f"   ID: {c['id']}")
+        print(f"   描述: {c['description']}")
+        print(f"   规则: {c['rule']}")
+        print(f"\n💡 正确做法:")
+        print(f"   使用: image-gen-skill --interactive")
+        print(f"{'='*60}\n")
+        raise ConstraintViolation(c['error_msg'])
+
+# =============================================================================
+# API 选择逻辑 (带强制比较)
+# =============================================================================
+
+APIS = {
+    'siliconflow': {
+        'name': 'SiliconFlow (Kolors)',
+        'models': ['Kwai-Kolors/Kolors'],
+        'best_for': ['写实人像', '产品摄影', '自然场景'],
+        'strengths': ['照片级真实感', '皮肤质感细腻', '光影自然'],
+        'weaknesses': ['插画风格一般', '中文理解中等']
+    },
+    'zhipu': {
+        'name': '智谱 AI (CogView)',
+        'models': ['cogview-3'],
+        'best_for': ['插画', '概念图', '中文提示词'],
+        'strengths': ['中文理解好', '艺术风格强', '创意表达'],
+        'weaknesses': ['写实程度一般', '照片感较弱']
+    }
+}
+
+def compare_apis_for_requirements(directions: dict) -> dict:
+    """
+    比较各API优势，返回详细对比供用户决策
+    这是 C003 约束的实现
+    """
+    print("\n" + "="*60)
+    print("  🔧 API 对比分析 (强制步骤)")
+    print("="*60)
     
-    # Scoring
-    siliconflow_score = 0
-    zhipu_score = 0
+    # 根据需求评分
+    scores = {'siliconflow': 0, 'zhipu': 0}
+    reasons = {'siliconflow': [], 'zhipu': []}
     
+    style = directions.get('style')
+    has_chinese = any('\u4e00' <= c <= '\u9fff' for c in directions.get('description', ''))
+    
+    # 风格评分
     if style == 'realistic':
-        siliconflow_score += 2
+        scores['siliconflow'] += 2
+        reasons['siliconflow'].append("写实风格 Kolors 照片级真实感更强")
     elif style == 'illustration':
-        zhipu_score += 1
+        scores['zhipu'] += 2
+        reasons['zhipu'].append("插画风格 CogView 艺术表达更好")
     
+    # 语言评分
     if has_chinese:
-        zhipu_score += 1
+        scores['zhipu'] += 1
+        reasons['zhipu'].append("中文提示词 CogView 理解更准确")
     
-    # Select winner
-    if zhipu_score > siliconflow_score:
-        return {'api': 'zhipu', 'name': 'Zhipu AI (CogView)'}
+    # 打印对比表
+    print("\n📊 能力对比:")
+    print("-" * 60)
+    for api_key, api in APIS.items():
+        score = scores[api_key]
+        print(f"\n{api['name']}")
+        print(f"   当前场景匹配度: {'⭐' * (score + 1)}")
+        print(f"   擅长: {', '.join(api['best_for'])}")
+        print(f"   优势: {', '.join(api['strengths'][:2])}")
+        print(f"   劣势: {', '.join(api['weaknesses'][:1])}")
+        if reasons[api_key]:
+            print(f"   ✓ 适合原因: {reasons[api_key][0]}")
+    print("-" * 60)
+    
+    # 推荐但不强制
+    best = max(scores, key=scores.get)
+    print(f"\n💡 系统推荐: {APIS[best]['name']}")
+    print(f"   (但你可以根据偏好选择其他)")
+    
+    return {'scores': scores, 'reasons': reasons, 'recommendation': best}
+
+# =============================================================================
+# 交互式向导 (强制流程)
+# =============================================================================
+
+def interactive_mode():
+    """
+    强制交互式向导 - 唯一合法的生成入口
+    实现 C001 + C002 + C003 约束
+    """
+    print("\n" + "="*60)
+    print("  🎨 Image-Gen-Skill 图像生成向导")
+    print("="*60)
+    print("\n本向导强制执行以下设计约束:")
+    for c in CONSTRAINTS.values():
+        print(f"   {c['id']}: {c['description']}")
+    print("="*60 + "\n")
+    
+    # Step 1: 自由描述 (C002 - 起点)
+    print("【步骤 1/5】自由描述")
+    print("请描述你想要的图像，可以是具体的也可以是模糊的。")
+    print("例如: 'Jeanne de Lamare的肖像', '夕阳下的海边小镇'\n")
+    
+    description = input("💭 描述: ").strip()
+    if not description:
+        raise ConstraintViolation("❌ 必须提供描述才能继续")
+    
+    # Step 2: 风格确认 (C002)
+    print("\n【步骤 2/5】风格选择")
+    styles = [
+        ('realistic', '写实/照片级', '像照片一样真实'),
+        ('illustration', '插画/手绘', '艺术化、绘画感'),
+        ('cinematic', '电影感', '戏剧性光影、电影色调'),
+        ('concept', '概念设计', '设计图、概念艺术'),
+        ('oil_painting', '油画风格', '古典油画质感'),
+    ]
+    for i, (k, n, d) in enumerate(styles, 1):
+        print(f"   {i}. {n} - {d}")
+    
+    while True:
+        choice = input("\n选择风格 [1-5]: ").strip()
+        if choice.isdigit() and 1 <= int(choice) <= 5:
+            style = styles[int(choice)-1][0]
+            break
+        print("请输入有效选项")
+    
+    # Step 3: 构图确认 (C002)
+    print("\n【步骤 3/5】构图选择")
+    angles = [
+        ('close-up', '特写', '面部细节为主'),
+        ('medium', '中景/半身', '人物+部分环境'),
+        ('wide', '广角/全身', '完整人物+环境'),
+    ]
+    for i, (k, n, d) in enumerate(angles, 1):
+        print(f"   {i}. {n} - {d}")
+    
+    while True:
+        choice = input("\n选择构图 [1-3]: ").strip()
+        if choice.isdigit() and 1 <= int(choice) <= 3:
+            angle = angles[int(choice)-1][0]
+            break
+        print("请输入有效选项")
+    
+    # Step 4: 氛围确认 (C002)
+    print("\n【步骤 4/5】氛围选择")
+    moods = [
+        ('melancholic', '忧郁/感伤', 'Jeanne式的悲剧氛围'),
+        ('warm', '温暖/柔和', '舒适、亲切'),
+        ('dramatic', '戏剧性', '强烈对比、冲击'),
+        ('serene', '宁静/安详', '平和、淡然'),
+    ]
+    for i, (k, n, d) in enumerate(moods, 1):
+        print(f"   {i}. {n} - {d}")
+    
+    while True:
+        choice = input("\n选择氛围 [1-4]: ").strip()
+        if choice.isdigit() and 1 <= int(choice) <= 4:
+            mood = moods[int(choice)-1][0]
+            break
+        print("请输入有效选项")
+    
+    # Step 5: 必需要素 (C002)
+    print("\n【步骤 5/5】必需要素")
+    print("有什么是你必须坚持的元素？(直接回车结束)")
+    must_haves = []
+    prompts = [
+        "特定颜色或材质? (如: 必须是蓝色连衣裙)",
+        "特定物品或装饰? (如: 必须有珍珠耳坠)",
+        "特定光线或时间? (如: 必须是黄昏光线)",
+    ]
+    for p in prompts:
+        ans = input(f"   {p} ").strip()
+        if ans:
+            must_haves.append(ans)
+    
+    # 汇总用户大方向 (C001 - 用户确认)
+    directions = {
+        'description': description,
+        'style': style,
+        'angle': angle,
+        'mood': mood,
+        'must_haves': must_haves,
+    }
+    
+    print("\n" + "="*60)
+    print("  📋 请确认你的选择")
+    print("="*60)
+    print(f"   描述: {description}")
+    print(f"   风格: {style}")
+    print(f"   构图: {angle}")
+    print(f"   氛围: {mood}")
+    if must_haves:
+        print(f"   必需要素: {', '.join(must_haves)}")
+    print("="*60)
+    
+    confirm = input("\n确认以上大方向？(y/n/修改) [y]: ").strip().lower()
+    if confirm == 'n':
+        print("已取消。请重新运行向导。")
+        return
+    elif confirm == '修改':
+        print("\n重新启动向导...\n")
+        return interactive_mode()
+    
+    # C003: 强制API比较
+    api_comparison = compare_apis_for_requirements(directions)
+    
+    print("\n请选择 API:")
+    for i, (k, api) in enumerate(APIS.items(), 1):
+        print(f"   {i}. {api['name']}")
+    print(f"   0. 接受系统推荐 ({APIS[api_comparison['recommendation']]['name']})")
+    
+    while True:
+        choice = input("\n选择 [0-2]: ").strip()
+        if choice == '0':
+            selected_api = api_comparison['recommendation']
+            break
+        elif choice.isdigit() and 1 <= int(choice) <= len(APIS):
+            selected_api = list(APIS.keys())[int(choice)-1]
+            break
+        print("请输入有效选项")
+    
+    print(f"\n✅ 已选择: {APIS[selected_api]['name']}")
+    
+    # AI 增强细节 (在约束框架内)
+    print("\n🤖 AI 正在基于你的选择补充专业细节...")
+    
+    # 构建最终提示词
+    parts = [description]
+    
+    style_map = {
+        'realistic': 'photorealistic, highly detailed, 8k',
+        'illustration': 'digital illustration, artistic, clean lines',
+        'cinematic': 'cinematic lighting, color grading, film look',
+        'concept': 'concept art, detailed, professional',
+        'oil_painting': 'oil painting style, classical art, canvas texture',
+    }
+    if style in style_map:
+        parts.append(style_map[style])
+    
+    angle_map = {
+        'close-up': 'close-up portrait, shallow depth of field',
+        'medium': 'medium shot, balanced composition',
+        'wide': 'wide angle, full body, environmental context',
+    }
+    if angle in angle_map:
+        parts.append(angle_map[angle])
+    
+    mood_map = {
+        'melancholic': 'melancholic atmosphere, soft shadows, introspective mood',
+        'warm': 'warm tones, cozy atmosphere, golden lighting',
+        'dramatic': 'dramatic lighting, high contrast, intense',
+        'serene': 'serene atmosphere, soft lighting, peaceful',
+    }
+    if mood in mood_map:
+        parts.append(mood_map[mood])
+    
+    if must_haves:
+        parts.extend(must_haves)
+    
+    final_prompt = ", ".join(parts)
+    
+    print("\n" + "="*60)
+    print("  📋 最终提示词")
+    print("="*60)
+    print(final_prompt)
+    print("="*60)
+    
+    # 最终确认
+    final_confirm = input("\n🚀 确认生成？(y/n) [y]: ").strip().lower()
+    if final_confirm == 'n':
+        print("已取消")
+        return
+    
+    # 执行生成
+    seed = input("随机种子 (回车随机): ").strip()
+    seed = int(seed) if seed.isdigit() else None
+    
+    print(f"\n🎨 使用 {APIS[selected_api]['name']} 生成...")
+    
+    if selected_api == 'siliconflow':
+        from generate import generate_image
+        generate_image(final_prompt, '1024x1024', seed)
     else:
-        return {'api': 'siliconflow', 'name': 'SiliconFlow (Kolors)'}
+        from generate_zhipu import generate_image
+        generate_image(final_prompt, '1024x1024', seed)
+
+# =============================================================================
+# 主入口 (强制执行约束)
+# =============================================================================
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Image-Gen-Skill - OpenClaw Universal Image Generator',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-OpenClaw Usage:
-  openclaw run image-gen-skill --prompt "a beautiful sunset"
-  openclaw run image-gen-skill --interactive
-
-Examples:
-  image-gen-skill generate "portrait of a girl"
-  image-gen-skill interactive
-  image-gen-skill analyze "a car"
-        """
+        description='Image-Gen-Skill - Constrained Image Generator',
+        epilog='注意: 本skill强制执行设计约束，必须使用 --interactive 模式'
     )
     
-    subparsers = parser.add_subparsers(dest='command', help='Command')
-    
-    # Generate command
-    gen_parser = subparsers.add_parser('generate', help='Generate image')
-    gen_parser.add_argument('prompt', help='Generation prompt')
-    gen_parser.add_argument('--api', choices=['siliconflow', 'zhipu'])
-    gen_parser.add_argument('--seed', type=int)
-    gen_parser.add_argument('--size', default='1024x1024')
-    
-    # Interactive command
-    subparsers.add_parser('interactive', help='Interactive wizard')
-    
-    # Analyze command
-    analyze_parser = subparsers.add_parser('analyze', help='Analyze prompt')
-    analyze_parser.add_argument('prompt', help='Prompt to analyze')
-    
-    # Quick mode options
-    parser.add_argument('--prompt', '-p', help='Quick generation')
-    parser.add_argument('--style', '-s', choices=['realistic', 'illustration', 'cinematic'])
-    parser.add_argument('--interactive', '-i', action='store_true')
-    parser.add_argument('--seed', type=int)
-    parser.add_argument('--size', default='1024x1024')
+    parser.add_argument('--interactive', '-i', action='store_true', 
+                       help='启动交互式向导 (必需)')
+    parser.add_argument('--prompt', '-p', help='❌ 禁用: 必须使用交互模式')
+    parser.add_argument('--quick', '-q', action='store_true', 
+                       help='❌ 禁用: 快速模式已移除')
     
     args = parser.parse_args()
     
-    # Quick interactive mode
-    if args.interactive or (not args.command and not args.prompt):
-        from generator import interactive_mode
+    # C001 约束: 强制交互模式
+    if args.prompt or args.quick:
+        enforce_constraint('NO_DIRECT_GENERATE', False)
+    
+    if not args.interactive:
+        print("\n" + "="*60)
+        print("  ⚠️  必须使用交互式模式")
+        print("="*60)
+        print("\n这是设计约束 C001 的要求:")
+        print("   禁止无用户确认直接生成")
+        print("\n正确用法:")
+        print("   image-gen-skill --interactive")
+        print("   或")
+        print("   image-gen-skill -i")
+        print("="*60 + "\n")
+        sys.exit(1)
+    
+    try:
         interactive_mode()
-        return
-    
-    # Quick generate mode
-    if args.prompt and not args.command:
-        api_config = auto_select_api(args.prompt, args.style)
-        print(f"🎨 Auto-selected API: {api_config['name']}")
-        
-        if api_config['api'] == 'siliconflow':
-            from generate import generate_image
-            generate_image(args.prompt, args.size, args.seed)
-        else:
-            from generate_zhipu import generate_image
-            generate_image(args.prompt, args.size, args.seed)
-        return
-    
-    # Subcommands
-    if args.command == 'interactive':
-        from generator import interactive_mode
-        interactive_mode()
-    
-    elif args.command == 'generate':
-        if args.api == 'zhipu':
-            from generate_zhipu import generate_image
-        else:
-            from generate import generate_image
-        generate_image(args.prompt, args.size, args.seed)
-    
-    elif args.command == 'analyze':
-        from prompt_advisor import PromptAnalyzer
-        analyzer = PromptAnalyzer(args.prompt)
-        result = analyzer.analyze()
-        import json
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-    
-    else:
-        parser.print_help()
+    except ConstraintViolation as e:
+        print(f"\n约束检查失败: {e}")
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

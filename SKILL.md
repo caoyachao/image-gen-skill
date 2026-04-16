@@ -1,6 +1,21 @@
 # Image-Gen-Skill
 
-Universal image generation skill with multi-API support (SiliconFlow + Zhipu AI). Features user-directed workflow, smart API selection, and prompt enhancement.
+Universal image generation skill with multi-API support (SiliconFlow + Zhipu AI). **Features mandatory design constraints** - enforces user confirmation workflow, detail clarity, and API comparison before generation.
+
+## Design Constraints (强制性设计约束)
+
+本 skill 强制执行以下设计约束，不可绕过：
+
+| 约束ID | 描述 | 规则 | 违反后果 |
+|--------|------|------|----------|
+| **C001** | 禁止无用户确认直接生成 | 必须使用 `--interactive` 交互模式，逐项确认风格、构图、氛围 | 生成被阻止，提示正确用法 |
+| **C002** | 禁止未明确细节直接生成 | 必须完成风格、构图、氛围、必需要素四步确认 | 生成被阻止，返回向导 |
+| **C003** | 禁止未比较模型优势直接选择 | 必须向用户展示 API 对比表并获得确认 | 生成被阻止，强制比较步骤 |
+
+这些约束确保：
+- 用户主导大方向，AI 只补充细节
+- 不会遗漏关键视觉要素
+- 选择最适合的 API 而非随机
 
 ## Prerequisites
 
@@ -36,160 +51,149 @@ export SILICONFLOW_API_KEY=your_key
 export ZHIPU_API_KEY=your_key
 ```
 
-## Installation
-
-```bash
-# Clone to OpenClaw skills directory
-cd ~/.openclaw/skills
-git clone https://github.com/caoyachao/image-gen-skill.git
-
-# Or copy to agent workspace
-cp -r image-gen-skill ~/.openclaw/workspace/agents/{your-agent}/skills/
-```
-
 ## Usage
 
-### Quick Generate (Auto API Selection)
+### ⚠️ 唯一合法用法: 交互式模式
 
 ```bash
-# Simple generation - API auto-selected based on prompt
-openclaw run image-gen-skill --prompt "a beautiful sunset"
-
-# With style preset
-openclaw run image-gen-skill --prompt "portrait" --style realistic
-
-# Chinese prompts work too
-openclaw run image-gen-skill --prompt "夕阳下的海边小镇"
-```
-
-### Interactive Mode (Recommended)
-
-```bash
-# Full interactive wizard - user directs, AI assists
+# 启动强制交互向导（唯一方式）
 openclaw run image-gen-skill --interactive
+
+# 或简写
+openclaw run image-gen-skill -i
 ```
 
-Workflow:
-1. Describe your image freely
-2. Confirm/adjust detected style
-3. Choose composition and mood
-4. Add must-have elements
-5. AI enhances with professional details
-6. Smart API selection
-7. Generate
-
-### Command Mode
-
+**禁止的用法**（将被约束系统阻止）:
 ```bash
-# Direct generation with specific API
-openclaw run image-gen-skill generate "portrait of a girl"
-openclaw run image-gen-skill generate "未来城市" --api zhipu
-
-# Analyze prompt completeness
-openclaw run image-gen-skill analyze "a car"
-
-# Interactive wizard
-openclaw run image-gen-skill interactive
+❌ openclaw run image-gen-skill --prompt "sunset"     # C001: 禁止直接生成
+❌ openclaw run image-gen-skill --quick                # C002: 禁止快速模式
+❌ openclaw run image-gen-skill generate "portrait"    # C003: 禁止绕过比较
 ```
 
-### Options
+### 交互式向导流程
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| `--prompt`, `-p` | Generation prompt | `--prompt "sunset"` |
-| `--style`, `-s` | Style preset | `--style realistic` |
-| `--api` | Force specific API | `--api siliconflow` |
-| `--seed` | Random seed for reproducibility | `--seed 42` |
-| `--size` | Image dimensions | `--size 1024x1024` |
-| `--interactive`, `-i` | Interactive wizard mode | `--interactive` |
+启动后必须经过以下步骤：
 
-## API Selection Guide
+1. **自由描述** - 告诉我想画什么
+2. **风格选择** - 写实/插画/电影/油画/概念
+3. **构图选择** - 特写/中景/广角
+4. **氛围选择** - 忧郁/温暖/戏剧性/宁静
+5. **必需要素** - 你有什么坚持要的细节
+6. **API 对比** - 系统展示各 API 优势，你确认选择
+7. **AI 增强** - 我补充专业细节
+8. **最终确认** - 你确认提示词
+9. **生成** - 执行
 
-| API | Best For | Strengths |
-|-----|----------|-----------|
-| **SiliconFlow (Kolors)** | Realistic photos, portraits, products | Photorealistic quality, natural lighting |
-| **SiliconFlow (Qwen)** | Text rendering, Chinese text in images | Good at generating readable text |
-| **Zhipu AI (CogView)** | Illustrations, concept art, Chinese prompts | Better Chinese understanding, creative styles |
+### API 对比（强制步骤）
 
-Auto-selection rules:
-- Realistic style + English → SiliconFlow
-- Illustration style → Zhipu AI
-- Chinese prompt → Zhipu AI (slight preference)
+在生成前，系统会强制展示：
 
-## Output
+| API | 擅长 | 优势 | 劣势 |
+|-----|------|------|------|
+| **SiliconFlow (Kolors)** | 写实人像、产品摄影 | 照片级真实感、皮肤质感细腻 | 插画风格一般 |
+| **智谱 AI (CogView)** | 插画、概念图、中文提示 | 中文理解好、艺术风格强 | 写实程度一般 |
 
-Images saved to: `output/{api}_{date}/{filename}.png`
-
-Each image includes:
-- PNG file
-- JSON metadata (prompt, seed, model, timestamp)
+系统会推荐，但**最终选择权在你**。
 
 ## Examples
 
-### Portrait Photography
-```bash
-openclaw run image-gen-skill --prompt "portrait of young woman, soft lighting" --style realistic
+### 文学人物肖像（Jeanne de Lamare）
+
+```
+$ openclaw run image-gen-skill --interactive
+
+【步骤 1/5】自由描述
+💭 描述: Jeanne de Lamare的肖像，莫泊桑小说《一生》的女主角
+
+【步骤 2/5】风格选择
+   1. 写实/照片级 - 像照片一样真实
+   2. 插画/手绘 - 艺术化、绘画感
+   3. 电影感 - 戏剧性光影、电影色调
+   4. 概念设计 - 设计图、概念艺术
+   5. 油画风格 - 古典油画质感
+选择风格 [1-5]: 5
+
+【步骤 3/5】构图选择
+   1. 特写 - 面部细节为主
+   2. 中景/半身 - 人物+部分环境
+   3. 广角/全身 - 完整人物+环境
+选择构图 [1-3]: 2
+
+【步骤 4/5】氛围选择
+   1. 忧郁/感伤 - Jeanne式的悲剧氛围
+   2. 温暖/柔和 - 舒适、亲切
+   3. 戏剧性 - 强烈对比、冲击
+   4. 宁静/安详 - 平和、淡然
+选择氛围 [1-4]: 1
+
+【步骤 5/5】必需要素
+   特定颜色或材质? 必须是珍珠耳坠
+   特定物品或装饰? (回车跳过)
+   特定光线或时间? (回车跳过)
+
+📋 请确认你的选择:
+   描述: Jeanne de Lamare的肖像...
+   风格: oil_painting
+   构图: medium
+   氛围: melancholic
+   必需要素: 珍珠耳坠
+确认以上大方向？(y/n/修改) [y]: y
+
+🔧 API 对比分析 (强制步骤)
+   SiliconFlow (Kolors): ⭐⭐⭐ 写实风格照片级真实感更强
+   智谱 AI (CogView): ⭐⭐ 油画风格艺术表达更好
+请选择 API: 2
+
+🤖 AI 正在基于你的选择补充专业细节...
+
+📋 最终提示词:
+Jeanne de Lamare的肖像..., oil painting style, classical art, 
+medium shot, melancholic atmosphere, 珍珠耳坠, high quality...
+
+🚀 确认生成？(y/n) [y]: y
+
+🎨 使用 智谱 AI (CogView) 生成...
+✅ 图像已保存
 ```
 
-### Product Shot
-```bash
-openclaw run image-gen-skill --prompt "minimalist watch on white background" --style realistic
-```
+## Why Constraints?
 
-### Illustration
-```bash
-openclaw run image-gen-skill --prompt "fantasy castle on floating island" --style illustration --api zhipu
-```
+传统图像生成工具的问题是：
+- ❌ 输入一句话就生成，结果往往不符合预期
+- ❌ 随机选 API，可能选错风格
+- ❌ 用户大方向不明确，细节全靠 AI 猜
 
-### Chinese Scene
-```bash
-openclaw run image-gen-skill --prompt "江南水乡，小桥流水，水墨风格"
-```
+本 skill 的约束设计强制：
+- ✅ 用户必须先想清楚要什么
+- ✅ API 选择基于真实对比
+- ✅ AI 只在确认框架内补充细节
 
-## Troubleshooting
-
-### "No API key found"
-- Check `.env` file exists in skill directory
-- Verify API key format
-- Try setting environment variable directly
-
-### "Model does not exist"
-- Check API key has access to image generation models
-- Verify model name spelling
-- Try default model (auto-selected)
-
-### Poor image quality
-- Use `--interactive` mode for better prompt refinement
-- Add quality keywords: "8k", "detailed", "professional"
-- Try different style preset
+这就像建筑设计的约束——先有结构图，再细化管线，而不是边画边改。
 
 ## Files
 
 ```
 image-gen-skill/
-├── image-gen-skill        # Main entry point (this skill)
-├── generate.py            # SiliconFlow API client
-├── generate_zhipu.py      # Zhipu AI API client
-├── generator.py           # Interactive wizard logic
-├── prompt_advisor.py      # Prompt analysis engine
-├── smart_generator.py     # User-directed workflow
-├── advisor.py             # CLI advisor interface
-├── .env                   # API keys (gitignored)
-├── .env.example           # Example configuration
-├── SKILL.md               # This file
-└── README.md              # Quick reference
+├── image-gen-skill        # 主入口 (强制执行约束)
+├── generate.py            # SiliconFlow API 客户端
+├── generate_zhipu.py      # 智谱 AI API 客户端
+├── SKILL.md               # 本文档
+└── .env                   # API 密钥 (gitignored)
 ```
 
-## Version History
+## Troubleshooting
 
-- **v2.2** - Universal generator, user-directed workflow, smart API selection
-- **v2.1** - Multi-API support (SiliconFlow + Zhipu AI)
-- **v2.0** - AI-powered prompt advisor with completeness analysis
-- **v1.0** - Basic SiliconFlow Kolors integration
+### "❌ 必须使用 --interactive 模式"
+这是 C001 约束生效。你不能直接生成，必须启动交互向导确认大方向。
+
+### "❌ 细节未明确，无法生成"
+这是 C002 约束生效。你跳过了风格/构图/氛围确认步骤。
+
+### "❌ 必须比较 API 优势后由用户确认"
+这是 C003 约束生效。不能直接选 API，必须先展示对比表。
 
 ## Credits
 
 - SiliconFlow: https://siliconflow.cn
 - Zhipu AI: https://open.bigmodel.cn
-- Kolors model by Kwai
-- CogView model by Zhipu AI
+- 设计约束思想: ACP Harness Pattern
