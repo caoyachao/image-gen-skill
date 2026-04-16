@@ -1,0 +1,14 @@
+# Ignore sensitive credentials
+.env
+*.key
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Ignore output (should be in workspace output/, not here)
+output/
+temp/
+*.tmp

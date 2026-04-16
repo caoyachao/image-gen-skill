@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""
+Image-Gen-Skill - OpenClaw Universal Image Generator
+多 API 支持图像生成技能 (SiliconFlow + Zhipu AI)
+"""
+
+import os
+import sys
+import argparse
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+
+def auto_select_api(prompt: str, style: str = None) -> dict:
+    """Auto-select best API based on prompt characteristics"""
+    has_chinese = any('\u4e00' <= c <= '\u9fff' for c in prompt)
+    
+    # Scoring
+    siliconflow_score = 0
+    zhipu_score = 0
+    
+    if style == 'realistic':
+        siliconflow_score += 2
+    elif style == 'illustration':
+        zhipu_score += 1
+    
+    if has_chinese:
+        zhipu_score += 1
+    
+    # Select winner
+    if zhipu_score > siliconflow_score:
+        return {'api': 'zhipu', 'name': 'Zhipu AI (CogView)'}
+    else:
+        return {'api': 'siliconflow', 'name': 'SiliconFlow (Kolors)'}
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Image-Gen-Skill - OpenClaw Universal Image Generator',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+OpenClaw Usage:
+  openclaw run image-gen-skill --prompt "a beautiful sunset"
+  openclaw run image-gen-skill --interactive
+
+Examples:
+  image-gen-skill generate "portrait of a girl"
+  image-gen-skill interactive
+  image-gen-skill analyze "a car"
+        """
+    )
+    
+    subparsers = parser.add_subparsers(dest='command', help='Command')
+    
+    # Generate command
+    gen_parser = subparsers.add_parser('generate', help='Generate image')
+    gen_parser.add_argument('prompt', help='Generation prompt')
+    gen_parser.add_argument('--api', choices=['siliconflow', 'zhipu'])
+    gen_parser.add_argument('--seed', type=int)
+    gen_parser.add_argument('--size', default='1024x1024')
+    
+    # Interactive command
+    subparsers.add_parser('interactive', help='Interactive wizard')
+    
+    # Analyze command
+    analyze_parser = subparsers.add_parser('analyze', help='Analyze prompt')
+    analyze_parser.add_argument('prompt', help='Prompt to analyze')
+    
+    # Quick mode options
+    parser.add_argument('--prompt', '-p', help='Quick generation')
+    parser.add_argument('--style', '-s', choices=['realistic', 'illustration', 'cinematic'])
+    parser.add_argument('--interactive', '-i', action='store_true')
+    parser.add_argument('--seed', type=int)
+    parser.add_argument('--size', default='1024x1024')
+    
+    args = parser.parse_args()
+    
+    # Quick interactive mode
+    if args.interactive or (not args.command and not args.prompt):
+        from generator import interactive_mode
+        interactive_mode()
+        return
+    
+    # Quick generate mode
+    if args.prompt and not args.command:
+        api_config = auto_select_api(args.prompt, args.style)
+        print(f"🎨 Auto-selected API: {api_config['name']}")
+        
+        if api_config['api'] == 'siliconflow':
+            from generate import generate_image
+            generate_image(args.prompt, args.size, args.seed)
+        else:
+            from generate_zhipu import generate_image
+            generate_image(args.prompt, args.size, args.seed)
+        return
+    
+    # Subcommands
+    if args.command == 'interactive':
+        from generator import interactive_mode
+        interactive_mode()
+    
+    elif args.command == 'generate':
+        if args.api == 'zhipu':
+            from generate_zhipu import generate_image
+        else:
+            from generate import generate_image
+        generate_image(args.prompt, args.size, args.seed)
+    
+    elif args.command == 'analyze':
+        from prompt_advisor import PromptAnalyzer
+        analyzer = PromptAnalyzer(args.prompt)
+        result = analyzer.analyze()
+        import json
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    
+    else:
+        parser.print_help()
+
+if __name__ == '__main__':
+    main()
