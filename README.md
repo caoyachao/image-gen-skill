@@ -1,6 +1,6 @@
 # Image-Gen-Skill
 
-Universal image generation skill with multi-API support (SiliconFlow + Zhipu AI).
+Universal image generation skill with multi-API support (SiliconFlow + Zhipu AI + ModelScope + DashScope + Volcengine).
 **专为 Designer Agent 打造的图像生成工作流** — 强制设计约束确保产出质量。
 
 ## 设计理念
@@ -9,7 +9,12 @@ Universal image generation skill with multi-API support (SiliconFlow + Zhipu AI)
 
 ## 核心能力
 
-- **多 API 支持**: SiliconFlow (Kolors) + 智谱 AI (CogView)
+- **5 大 API 支持**: 
+  - SiliconFlow (Kolors) - 写实人像、产品摄影
+  - 智谱 AI (CogView) - 插画、概念图、中文提示
+  - ModelScope (FLUX.1, Qwen-Image) - 高质量艺术图、免费额度大
+  - 阿里云 DashScope (通义万相) - 中国风、传统美学
+  - 火山引擎 (豆包 Seedream) - 即梦 AI 底层模型
 - **强制交互向导**: 确保关键视觉要素不被遗漏
 - **API 对比分析**: 强制比较后由用户选择最适合的模型
 - **自动化归档**: 所有产出按日期整理到 `output/` 目录
@@ -24,13 +29,25 @@ Universal image generation skill with multi-API support (SiliconFlow + Zhipu AI)
 # SiliconFlow API (推荐用于写实人像、产品摄影)
 SILICONFLOW_API_KEY=your_siliconflow_key_here
 
-# Zhipu AI API (推荐用于插画、概念图、中文提示)
+# 智谱 AI API (推荐用于插画、概念图、中文提示)
 ZHIPU_API_KEY=your_zhipu_key_here
+
+# ModelScope API (FLUX.1, 免费额度大 2000次/天)
+MODELSCOPE_API_KEY=your_modelscope_key_here
+
+# 阿里云 DashScope (通义万相, 中国画风格)
+DASHSCOPE_API_KEY=your_dashscope_key_here
+
+# 火山引擎 API (豆包 Seedream, 即梦 AI)
+VOLCENGINE_API_KEY=your_volcengine_key_here
 ```
 
 获取方式：
 - SiliconFlow: https://siliconflow.cn
 - 智谱 AI: https://open.bigmodel.cn
+- ModelScope: https://www.modelscope.cn (需实名认证)
+- 阿里云 DashScope: https://dashscope.aliyun.com
+- 火山引擎: https://console.volcengine.com/ark
 
 ### 2. 使用交互式向导（唯一方式）
 
@@ -107,6 +124,7 @@ $ python3 image-gen-skill --interactive
 🔧 API 对比分析
    SiliconFlow (Kolors): ⭐⭐⭐ 写实风格照片级真实感更强
    智谱 AI (CogView): ⭐⭐ 油画风格艺术表达更好
+   ModelScope (FLUX.1): ⭐⭐⭐ 高质量艺术图、细节丰富
 请选择 API: 2
 
 🤖 AI 正在基于你的选择补充专业细节...
@@ -127,6 +145,19 @@ medium shot, melancholic atmosphere, 珍珠耳坠, high quality...
 |-----|----------|------|------|
 | **SiliconFlow (Kolors)** | 写实人像、产品摄影 | 照片级真实感、皮肤质感细腻 | 插画风格一般 |
 | **智谱 AI (CogView)** | 插画、概念图、中文提示 | 中文理解好、艺术风格强 | 写实程度一般 |
+| **ModelScope (FLUX.1)** | 高质量艺术图、细节丰富 | 免费额度大(2000/天)、质量高 | 需异步轮询、需实名认证 |
+| **DashScope (通义万相)** | 中国风、传统美学 | 中国画风格、支持风格标签 | 需阿里云账号 |
+| **Volcengine (Seedream)** | 通用图像生成 | 即梦 AI 底层模型、速度快 | 需开通模型服务 |
+
+### 风格标签支持
+
+**DashScope 通义万相支持:**
+- `<chinese painting>` - 中国画风格
+- `<anime>` - 动漫风格
+- `<oil painting>` - 油画风格
+- `<watercolor>` - 水彩风格
+- `<sketch>` - 素描风格
+- `<photography>` - 摄影风格
 
 ## 文件结构
 
@@ -135,6 +166,10 @@ image-gen-skill/
 ├── image-gen-skill        # 主入口脚本（强制执行设计约束）
 ├── generate.py            # SiliconFlow API 客户端
 ├── generate_zhipu.py      # 智谱 AI API 客户端
+├── generate_modelscope.py # ModelScope API 客户端 (FLUX.1)
+├── generate_aliyun.py     # 阿里云 DashScope 客户端 (通义万相)
+├── generate_volcengine.py # 火山引擎 API 客户端 (豆包 Seedream)
+├── query_free_models.py   # 免费模型查询工具
 ├── smart_generator.py     # 智能生成器
 ├── prompt_advisor.py      # 提示词建议器
 ├── advisor.py             # 设计顾问模块
@@ -170,6 +205,21 @@ image-gen-skill/
 - **中文理解**: 优秀
 - **免费额度**: 注册赠送
 
+### ModelScope (FLUX.1-Krea-dev)
+- **支持尺寸**: 1024x1024
+- **推理速度**: ~48秒 (异步)
+- **免费额度**: 2000次/天
+
+### 阿里云 DashScope (通义万相 wanx-v1)
+- **支持尺寸**: 1024x1024
+- **推理速度**: ~30秒 (异步)
+- **风格标签**: 支持 `<chinese painting>` 等
+
+### 火山引擎 (豆包 Seedream 4.0)
+- **支持尺寸**: 1024x1024
+- **推理速度**: ~10秒
+- **特点**: 即梦 AI 底层模型
+
 ## 设计约束（不可绕过）
 
 | 约束ID | 描述 | 违反后果 |
@@ -189,10 +239,22 @@ image-gen-skill/
 ### "❌ 必须比较 API 优势后由用户确认"
 这是 C003 约束生效。必须先展示对比表再选择 API。
 
+### "❌ ModelNotOpen" (火山引擎)
+需要在火山方舟控制台开通模型服务：控制台 → 开通管理 → 开通图像生成模型
+
+## 安全提示
+
+- `.env` 文件包含敏感 API 密钥，**永远不要提交到 Git**
+- 已配置 `.gitignore` 自动忽略 `.env` 文件
+- 定期检查代码中是否有硬编码的 API 密钥
+
 ## Credits
 
 - SiliconFlow: https://siliconflow.cn
 - 智谱 AI: https://open.bigmodel.cn
+- ModelScope: https://www.modelscope.cn
+- 阿里云 DashScope: https://dashscope.aliyun.com
+- 火山引擎 Ark: https://console.volcengine.com/ark
 - 设计约束思想: ACP Harness Pattern
 
 ---
