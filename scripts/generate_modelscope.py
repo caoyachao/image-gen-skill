@@ -20,15 +20,16 @@ from datetime import datetime
 
 def load_env():
     """Load environment variables from .env file"""
-    env_path = Path(__file__).parent / '.env'
+    env_path = Path(__file__).parent.parent / '.env'
     if env_path.exists():
         with open(env_path) as f:
             for line in f:
                 if line.strip() and not line.startswith('#'):
-                    key, value = line.strip().split('=', 1)
-                    os.environ[key] = value
+                    if '=' in line:
+                        key, value = line.strip().split('=', 1)
+                        os.environ[key] = value
 
-def generate_image(prompt, size="1024x1024", seed=None, model=None):
+def generate_image(prompt, size="1024x1024", seed=None, model=None, steps=None, guidance=None):
     """
     Generate image using ModelScope API-Inference
     """
@@ -74,6 +75,7 @@ def generate_image(prompt, size="1024x1024", seed=None, model=None):
         data["seed"] = seed
     
     print(f"📝 Request URL: {url}")
+    print(f"📝 Model: {model}")
     print(f"📝 Request Data: {json.dumps(data, indent=2)}")
     
     # 发送请求
@@ -117,6 +119,8 @@ def main():
     parser.add_argument('--model', default='Qwen/Qwen-Image', help='Model ID (default: Qwen/Qwen-Image)')
     parser.add_argument('--size', default='1024x1024', help='Image size (default: 1024x1024)')
     parser.add_argument('--seed', type=int, help='Random seed')
+    parser.add_argument('--steps', type=int, help='Number of inference steps')
+    parser.add_argument('--guidance', type=float, help='Guidance scale')
     parser.add_argument('--output-dir', help='Output directory')
     
     args = parser.parse_args()
@@ -125,10 +129,14 @@ def main():
     print(f"📝 Prompt: {args.prompt}")
     print(f"📐 Size: {args.size}")
     print(f"🤖 Model: {args.model}")
+    if args.steps:
+        print(f"🔢 Steps: {args.steps}")
+    if args.guidance:
+        print(f"📊 Guidance: {args.guidance}")
     print("-" * 50)
     
     # Generate
-    result = generate_image(args.prompt, args.size, args.seed, args.model)
+    result = generate_image(args.prompt, args.size, args.seed, args.model, args.steps, args.guidance)
     
     if result is None:
         print("\n❌ Generation failed.")
