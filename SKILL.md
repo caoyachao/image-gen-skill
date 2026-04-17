@@ -1,6 +1,6 @@
 # Image-Gen-Skill
 
-Universal image generation skill with multi-API support (SiliconFlow + Zhipu AI + ModelScope). **Features mandatory design constraints** - enforces user confirmation workflow, detail clarity, and API comparison before generation.
+Universal image generation skill with multi-API support (SiliconFlow + Zhipu AI + ModelScope + Alibaba Cloud DashScope). **Features mandatory design constraints** - enforces user confirmation workflow, detail clarity, and API comparison before generation.
 
 ## Design Constraints (强制性设计约束)
 
@@ -39,6 +39,12 @@ You need at least one of the following API keys:
 - ⚠️ **Security Note**: API key format is `ms-xxxxx`, but remove the `ms-` prefix when using in Authorization header
 - Free tier: 2000 calls/day (500 per model)
 
+**Option 4: Alibaba Cloud DashScope (通义万相, Chinese style specialist)**
+- Register at https://dashscope.aliyun.com
+- Get API key from: 控制台 → API Key 管理
+- Supports Chinese painting style (`<chinese painting>`)
+- Free tier for new users (check console for details)
+
 ### Configuration
 
 Create `.env` file in skill directory:
@@ -54,12 +60,18 @@ ZHIPU_API_KEY=your_zhipu_key_here
 # Get from: https://www.modelscope.cn/my/myaccesstoken
 # IMPORTANT: Remove 'ms-' prefix when using the key
 MODELSCOPE_API_KEY=your_modelscope_key_here
+
+# Alibaba Cloud DashScope (通义万相)
+# Get from: https://dashscope.aliyun.com
+DASHSCOPE_API_KEY=your_dashscope_key_here
 ```
 
 Or set environment variables:
 ```bash
 export SILICONFLOW_API_KEY=your_key
 export ZHIPU_API_KEY=your_key
+export MODELSCOPE_API_KEY=your_key
+export DASHSCOPE_API_KEY=your_key
 ```
 
 ## Usage
@@ -104,8 +116,20 @@ openclaw run image-gen-skill -i
 | **SiliconFlow (Kolors)** | 写实人像、产品摄影 | 照片级真实感、皮肤质感细腻 | 插画风格一般 |
 | **智谱 AI (CogView)** | 插画、概念图、中文提示 | 中文理解好、艺术风格强 | 写实程度一般 |
 | **ModelScope (FLUX.1)** | 高质量艺术图、细节丰富 | 免费额度大(2000/天)、FLUX.1质量高 | 需异步轮询、需实名认证 |
+| **DashScope (通义万相)** | 中国风、传统美学 | 中国画风格、中文理解强 | 需阿里云账号 |
 
 系统会推荐，但**最终选择权在你**。
+
+### DashScope 通义万相风格选项
+
+当选择 DashScope API 时，支持以下风格：
+
+- `<chinese painting>` - 中国画风格（推荐用于古风）
+- `<anime>` - 动漫风格
+- `<oil painting>` - 油画风格
+- `<watercolor>` - 水彩风格
+- `<sketch>` - 素描风格
+- `<photography>` - 摄影风格
 
 ## Examples
 
@@ -168,6 +192,25 @@ medium shot, melancholic atmosphere, 珍珠耳坠, high quality...
 ✅ 图像已保存
 ```
 
+### 古风仕女图（使用 DashScope）
+
+```
+🔧 API 对比分析 (强制步骤)
+   DashScope (通义万相): ⭐⭐⭐ 中国画风格最适合古风题材
+请选择 API: 4
+
+🤖 AI 正在基于你的选择补充专业细节...
+
+📋 最终提示词:
+古代中国美女，穿着华丽的汉服，长发及腰，手持团扇，
+优雅端庄，<chinese painting> style, high quality...
+
+🚀 确认生成？(y/n) [y]: y
+
+🎨 使用 DashScope (通义万相) 生成...
+✅ 图像已保存
+```
+
 ## Why Constraints?
 
 传统图像生成工具的问题是：
@@ -190,6 +233,7 @@ image-gen-skill/
 ├── generate.py            # SiliconFlow API 客户端
 ├── generate_zhipu.py      # 智谱 AI API 客户端
 ├── generate_modelscope.py # ModelScope API 客户端 (FLUX.1, Qwen-Image)
+├── generate_aliyun.py     # Alibaba Cloud DashScope API 客户端 (通义万相)
 ├── SKILL.md               # 本文档
 └── .env                   # API 密钥 (gitignored)
 ```
@@ -210,4 +254,5 @@ image-gen-skill/
 - SiliconFlow: https://siliconflow.cn
 - Zhipu AI: https://open.bigmodel.cn
 - ModelScope: https://www.modelscope.cn
+- Alibaba Cloud DashScope: https://dashscope.aliyun.com
 - 设计约束思想: ACP Harness Pattern
