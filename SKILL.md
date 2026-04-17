@@ -192,25 +192,6 @@ medium shot, melancholic atmosphere, 珍珠耳坠, high quality...
 ✅ 图像已保存
 ```
 
-### 古风仕女图（使用 DashScope）
-
-```
-🔧 API 对比分析 (强制步骤)
-   DashScope (通义万相): ⭐⭐⭐ 中国画风格最适合古风题材
-请选择 API: 4
-
-🤖 AI 正在基于你的选择补充专业细节...
-
-📋 最终提示词:
-古代中国美女，穿着华丽的汉服，长发及腰，手持团扇，
-优雅端庄，<chinese painting> style, high quality...
-
-🚀 确认生成？(y/n) [y]: y
-
-🎨 使用 DashScope (通义万相) 生成...
-✅ 图像已保存
-```
-
 ## Why Constraints?
 
 传统图像生成工具的问题是：
