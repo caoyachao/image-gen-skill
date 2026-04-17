@@ -1,14 +1,31 @@
 # Ignore sensitive credentials
 .env
+.env.local
+.env.*.local
 *.key
+*.pem
+secrets/
 
 # Ignore Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
+*.egg
 
 # Ignore output (should be in workspace output/, not here)
 output/
 temp/
 *.tmp
+*.log
+
+# Ignore IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
