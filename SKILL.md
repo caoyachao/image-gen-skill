@@ -1,6 +1,6 @@
 # Image-Gen-Skill
 
-Universal image generation skill with multi-API support (SiliconFlow + Zhipu AI + ModelScope + Alibaba Cloud DashScope). **Features mandatory design constraints** - enforces user confirmation workflow, detail clarity, and API comparison before generation.
+Universal image generation skill with multi-API support (Volcengine Doubao + SiliconFlow + Zhipu AI + ModelScope + Alibaba Cloud DashScope). **Features mandatory design constraints** - enforces user confirmation workflow, detail clarity, and API comparison before generation.
 
 ## Design Constraints (强制性设计约束)
 
@@ -45,6 +45,13 @@ You need at least one of the following API keys:
 - Supports Chinese painting style (`<chinese painting>`)
 - Free tier for new users (check console for details)
 
+**Option 5: Volcengine Ark (火山引擎, Doubao-Seedream - ⭐ Recommended)**
+- Register at https://console.volcengine.com/ark
+- Get API key from: 控制台 → 密钥管理 → 创建 API Key
+- ⚠️ **Important**: API keys typically start with `ark-` (e.g., `ark-xxxxxxxx`)
+- **Doubao-Seedream-4.5**: 字节跳动最新文生图模型，中文理解优秀，细节丰富
+- Free tier available for new users
+
 ### Configuration
 
 Create `.env` file in skill directory:
@@ -64,6 +71,12 @@ MODELSCOPE_API_KEY=your_modelscope_key_here
 # Alibaba Cloud DashScope (通义万相)
 # Get from: https://dashscope.aliyun.com
 DASHSCOPE_API_KEY=your_dashscope_key_here
+
+# Volcengine Ark (火山引擎 Doubao-Seedream)
+# Get from: https://console.volcengine.com/ark
+# IMPORTANT: API keys typically start with 'ark-'
+VOLCENGINE_API_KEY=your_volcengine_key_here
+VOLCENGINE_DEFAULT_MODEL=doubao-seedream-4-0-250828
 ```
 
 Or set environment variables:
@@ -72,6 +85,7 @@ export SILICONFLOW_API_KEY=your_key
 export ZHIPU_API_KEY=your_key
 export MODELSCOPE_API_KEY=your_key
 export DASHSCOPE_API_KEY=your_key
+export VOLCENGINE_API_KEY=your_key
 ```
 
 ## Usage
@@ -113,6 +127,7 @@ openclaw run image-gen-skill -i
 
 | API | 擅长 | 优势 | 劣势 |
 |-----|------|------|------|
+| **Volcengine (Doubao-Seedream-4.5) ⭐推荐** | 通用场景、中文理解 | ⭐ 最新模型、细节丰富、中文提示优秀、响应快 | 需火山引擎账号 |
 | **SiliconFlow (Kolors)** | 写实人像、产品摄影 | 照片级真实感、皮肤质感细腻 | 插画风格一般 |
 | **智谱 AI (CogView)** | 插画、概念图、中文提示 | 中文理解好、艺术风格强 | 写实程度一般 |
 | **ModelScope (FLUX.1)** | 高质量艺术图、细节丰富 | 免费额度大(2000/天)、FLUX.1质量高 | 需异步轮询、需实名认证 |
@@ -215,6 +230,7 @@ image-gen-skill/
 ├── generate_zhipu.py      # 智谱 AI API 客户端
 ├── generate_modelscope.py # ModelScope API 客户端 (FLUX.1, Qwen-Image)
 ├── generate_aliyun.py     # Alibaba Cloud DashScope API 客户端 (通义万相)
+├── generate_doubao.py     # Volcengine Ark API 客户端 (Doubao-Seedream)
 ├── SKILL.md               # 本文档
 └── .env                   # API 密钥 (gitignored)
 ```
@@ -232,6 +248,7 @@ image-gen-skill/
 
 ## Credits
 
+- Volcengine Ark: https://console.volcengine.com/ark
 - SiliconFlow: https://siliconflow.cn
 - Zhipu AI: https://open.bigmodel.cn
 - ModelScope: https://www.modelscope.cn
