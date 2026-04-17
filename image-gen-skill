@@ -82,6 +82,13 @@ APIS = {
         'best_for': ['插画', '概念图', '中文提示词'],
         'strengths': ['中文理解好', '艺术风格强', '创意表达'],
         'weaknesses': ['写实程度一般', '照片感较弱']
+    },
+    'modelscope': {
+        'name': 'ModelScope (FLUX.1)',
+        'models': ['black-forest-labs/FLUX.1-Krea-dev', 'Qwen/Qwen-Image'],
+        'best_for': ['高质量艺术图', '细节丰富场景', '免费大量生成'],
+        'strengths': ['免费额度大(2000/天)', 'FLUX.1质量极高', '支持多种模型'],
+        'weaknesses': ['需异步轮询等待', '需阿里云实名认证', 'FLUX较慢(约48s)']
     }
 }
 
@@ -95,8 +102,8 @@ def compare_apis_for_requirements(directions: dict) -> dict:
     print("="*60)
     
     # 根据需求评分
-    scores = {'siliconflow': 0, 'zhipu': 0}
-    reasons = {'siliconflow': [], 'zhipu': []}
+    scores = {'siliconflow': 0, 'zhipu': 0, 'modelscope': 0}
+    reasons = {'siliconflow': [], 'zhipu': [], 'modelscope': []}
     
     style = directions.get('style')
     has_chinese = any('\u4e00' <= c <= '\u9fff' for c in directions.get('description', ''))
@@ -104,10 +111,17 @@ def compare_apis_for_requirements(directions: dict) -> dict:
     # 风格评分
     if style == 'realistic':
         scores['siliconflow'] += 2
+        scores['modelscope'] += 2  # FLUX.1 也很擅长写实
         reasons['siliconflow'].append("写实风格 Kolors 照片级真实感更强")
+        reasons['modelscope'].append("FLUX.1 高质量写实，细节丰富")
     elif style == 'illustration':
         scores['zhipu'] += 2
+        scores['modelscope'] += 1
         reasons['zhipu'].append("插画风格 CogView 艺术表达更好")
+        reasons['modelscope'].append("FLUX.1 艺术风格表现力强")
+    elif style in ['cinematic', 'concept', 'oil_painting']:
+        scores['modelscope'] += 2
+        reasons['modelscope'].append("艺术/电影风格 FLUX.1 质量更高")
     
     # 语言评分
     if has_chinese:
@@ -121,7 +135,7 @@ def compare_apis_for_requirements(directions: dict) -> dict:
         score = scores[api_key]
         print(f"\n{api['name']}")
         print(f"   当前场景匹配度: {'⭐' * (score + 1)}")
-        print(f"   擅长: {', '.join(api['best_for'])}")
+        print(f"   擅长: {', '.join(api['best_for'][:2])}")
         print(f"   优势: {', '.join(api['strengths'][:2])}")
         print(f"   劣势: {', '.join(api['weaknesses'][:1])}")
         if reasons[api_key]:
@@ -266,7 +280,7 @@ def interactive_mode():
     print(f"   0. 接受系统推荐 ({APIS[api_comparison['recommendation']]['name']})")
     
     while True:
-        choice = input("\n选择 [0-2]: ").strip()
+        choice = input(f"\n选择 [0-{len(APIS)}]: ").strip()
         if choice == '0':
             selected_api = api_comparison['recommendation']
             break
@@ -336,6 +350,10 @@ def interactive_mode():
     if selected_api == 'siliconflow':
         from generate import generate_image
         generate_image(final_prompt, '1024x1024', seed)
+    elif selected_api == 'modelscope':
+        from generate_modelscope import generate_image
+        # ModelScope uses async mode, select FLUX.1 as default
+        generate_image(final_prompt, '1024x1024', seed, model='black-forest-labs/FLUX.1-Krea-dev')
     else:
         from generate_zhipu import generate_image
         generate_image(final_prompt, '1024x1024', seed)

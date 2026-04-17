@@ -1,6 +1,6 @@
 # Image-Gen-Skill
 
-Universal image generation skill with multi-API support (SiliconFlow + Zhipu AI). **Features mandatory design constraints** - enforces user confirmation workflow, detail clarity, and API comparison before generation.
+Universal image generation skill with multi-API support (SiliconFlow + Zhipu AI + ModelScope). **Features mandatory design constraints** - enforces user confirmation workflow, detail clarity, and API comparison before generation.
 
 ## Design Constraints (强制性设计约束)
 
@@ -33,6 +33,12 @@ You need at least one of the following API keys:
 - Get API key from console
 - Free tier available
 
+**Option 3: ModelScope (Recommended for FLUX.1, free tier)**
+- Register at https://www.modelscope.cn (requires Alibaba Cloud account with real-name verification)
+- Get API key from: 个人中心 → 访问令牌 → 创建新令牌
+- ⚠️ **Security Note**: API key format is `ms-xxxxx`, but remove the `ms-` prefix when using in Authorization header
+- Free tier: 2000 calls/day (500 per model)
+
 ### Configuration
 
 Create `.env` file in skill directory:
@@ -43,6 +49,11 @@ SILICONFLOW_API_KEY=your_siliconflow_key_here
 
 # Zhipu AI API  
 ZHIPU_API_KEY=your_zhipu_key_here
+
+# ModelScope API (FLUX.1, Qwen-Image, etc.)
+# Get from: https://www.modelscope.cn/my/myaccesstoken
+# IMPORTANT: Remove 'ms-' prefix when using the key
+MODELSCOPE_API_KEY=your_modelscope_key_here
 ```
 
 Or set environment variables:
@@ -92,6 +103,7 @@ openclaw run image-gen-skill -i
 |-----|------|------|------|
 | **SiliconFlow (Kolors)** | 写实人像、产品摄影 | 照片级真实感、皮肤质感细腻 | 插画风格一般 |
 | **智谱 AI (CogView)** | 插画、概念图、中文提示 | 中文理解好、艺术风格强 | 写实程度一般 |
+| **ModelScope (FLUX.1)** | 高质量艺术图、细节丰富 | 免费额度大(2000/天)、FLUX.1质量高 | 需异步轮询、需实名认证 |
 
 系统会推荐，但**最终选择权在你**。
 
@@ -177,6 +189,7 @@ image-gen-skill/
 ├── image-gen-skill        # 主入口 (强制执行约束)
 ├── generate.py            # SiliconFlow API 客户端
 ├── generate_zhipu.py      # 智谱 AI API 客户端
+├── generate_modelscope.py # ModelScope API 客户端 (FLUX.1, Qwen-Image)
 ├── SKILL.md               # 本文档
 └── .env                   # API 密钥 (gitignored)
 ```
@@ -196,4 +209,5 @@ image-gen-skill/
 
 - SiliconFlow: https://siliconflow.cn
 - Zhipu AI: https://open.bigmodel.cn
+- ModelScope: https://www.modelscope.cn
 - 设计约束思想: ACP Harness Pattern
