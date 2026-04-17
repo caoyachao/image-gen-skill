@@ -362,7 +362,7 @@ def interactive_mode():
     print(f"\n🎨 使用 {APIS[selected_api]['name']} 生成...")
     
     if selected_api == 'volcengine':
-        from generate_doubao import generate_doubao_image, download_image
+        from scripts.generate_doubao import generate_doubao_image, download_image
         import os
         result = generate_doubao_image(os.environ.get('VOLCENGINE_API_KEY'), final_prompt, model='doubao-seedream-4-0-250828', size='1024x1024')
         if result and 'data' in result:
@@ -377,13 +377,13 @@ def interactive_mode():
                 if download_image(image_url, output_path):
                     print(f"✅ 已保存: {output_path}")
     elif selected_api == 'siliconflow':
-        from generate import generate_image
+        from scripts.generate import generate_image
         generate_image(final_prompt, '1024x1024', seed)
     elif selected_api == 'modelscope':
-        from generate_modelscope import generate_image
+        from scripts.generate_modelscope import generate_image
         generate_image(final_prompt, '1024x1024', seed, model='black-forest-labs/FLUX.1-Krea-dev')
     elif selected_api == 'dashscope':
-        from generate_aliyun import generate_aliyun_image, check_task_status, download_image
+        from scripts.generate_aliyun import generate_aliyun_image, check_task_status, download_image
         import time
         result = generate_aliyun_image(os.environ.get('DASHSCOPE_API_KEY'), final_prompt, '1024x1024')
         if result and 'output' in result:
@@ -405,7 +405,7 @@ def interactive_mode():
                             print(f"✅ 已保存: {output_path}")
                     break
     else:
-        from generate_zhipu import generate_image
+        from scripts.generate_zhipu import generate_image
         generate_image(final_prompt, '1024x1024', seed)
 
 # =============================================================================

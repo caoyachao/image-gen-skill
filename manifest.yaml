@@ -1,0 +1,43 @@
+name: image-gen-skill
+version: 2.0.0
+description: Universal image generation skill with multi-API support (Volcengine Doubao + SiliconFlow + Zhipu AI + ModelScope + Alibaba Cloud DashScope)
+
+author: designer
+type: skill
+
+entry:
+  command: image-gen-skill
+  args:
+    - --interactive
+
+env:
+  - SILICONFLOW_API_KEY
+  - ZHIPU_API_KEY
+  - MODELSCOPE_API_KEY
+  - DASHSCOPE_API_KEY
+  - VOLCENGINE_API_KEY
+
+docs:
+  skill: SKILL.md
+  readme: README.md
+
+tags:
+  - image-generation
+  - ai
+  - doubao
+  - seedream
+  - siliconflow
+  - volcengine
+  - dashscope
+  - modelscope
+
+constraints:
+  - id: C001
+    description: 禁止无用户确认直接生成
+    rule: 必须使用 --interactive 交互模式
+  - id: C002
+    description: 禁止未明确细节直接生成
+    rule: 必须完成风格、构图、氛围、必需要素四步确认
+  - id: C003
+    description: 禁止未比较模型优势直接选择
+    rule: 必须向用户展示 API 对比表并获得确认
