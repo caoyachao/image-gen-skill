@@ -76,7 +76,7 @@ DASHSCOPE_API_KEY=your_dashscope_key_here
 # Get from: https://console.volcengine.com/ark
 # IMPORTANT: API keys typically start with 'ark-'
 VOLCENGINE_API_KEY=your_volcengine_key_here
-VOLCENGINE_DEFAULT_MODEL=doubao-seedream-4-0-250828
+VOLCENGINE_DEFAULT_MODEL=doubao-seedream-4-5-251128
 ```
 
 Or set environment variables:
