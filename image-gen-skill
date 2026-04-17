@@ -69,6 +69,13 @@ def enforce_constraint(constraint_id: str, condition: bool):
 # =============================================================================
 
 APIS = {
+    'volcengine': {
+        'name': 'Volcengine (Doubao-Seedream-4.5) ⭐推荐',
+        'models': ['doubao-seedream-4-0-250828'],
+        'best_for': ['通用场景', '中文理解', '快速生成'],
+        'strengths': ['最新模型', '细节丰富', '中文提示优秀', '响应快'],
+        'weaknesses': ['需火山引擎账号']
+    },
     'siliconflow': {
         'name': 'SiliconFlow (Kolors)',
         'models': ['Kwai-Kolors/Kolors'],
@@ -89,6 +96,13 @@ APIS = {
         'best_for': ['高质量艺术图', '细节丰富场景', '免费大量生成'],
         'strengths': ['免费额度大(2000/天)', 'FLUX.1质量极高', '支持多种模型'],
         'weaknesses': ['需异步轮询等待', '需阿里云实名认证', 'FLUX较慢(约48s)']
+    },
+    'dashscope': {
+        'name': 'DashScope (通义万相)',
+        'models': ['wanx-v1'],
+        'best_for': ['中国风', '传统美学', '工笔画'],
+        'strengths': ['中国画风格', '中文理解强', '阿里云稳定'],
+        'weaknesses': ['需阿里云账号', '风格偏传统']
     }
 }
 
@@ -347,13 +361,49 @@ def interactive_mode():
     
     print(f"\n🎨 使用 {APIS[selected_api]['name']} 生成...")
     
-    if selected_api == 'siliconflow':
+    if selected_api == 'volcengine':
+        from generate_doubao import generate_doubao_image, download_image
+        import os
+        result = generate_doubao_image(os.environ.get('VOLCENGINE_API_KEY'), final_prompt, model='doubao-seedream-4-0-250828', size='1024x1024')
+        if result and 'data' in result:
+            image_url = result['data'][0].get('url')
+            if image_url:
+                from pathlib import Path
+                from datetime import datetime
+                today = datetime.now().strftime('%Y%m%d')
+                output_dir = Path('/root/.openclaw/workspace/agents/designer/output') / f'doubao_{today}'
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output_path = output_dir / f'doubao_image_{seed or "001"}.png'
+                if download_image(image_url, output_path):
+                    print(f"✅ 已保存: {output_path}")
+    elif selected_api == 'siliconflow':
         from generate import generate_image
         generate_image(final_prompt, '1024x1024', seed)
     elif selected_api == 'modelscope':
         from generate_modelscope import generate_image
-        # ModelScope uses async mode, select FLUX.1 as default
         generate_image(final_prompt, '1024x1024', seed, model='black-forest-labs/FLUX.1-Krea-dev')
+    elif selected_api == 'dashscope':
+        from generate_aliyun import generate_aliyun_image, check_task_status, download_image
+        import time
+        result = generate_aliyun_image(os.environ.get('DASHSCOPE_API_KEY'), final_prompt, '1024x1024')
+        if result and 'output' in result:
+            task_id = result['output'].get('task_id')
+            # Wait for async completion
+            for i in range(24):  # Max 120s
+                time.sleep(5)
+                status = check_task_status(os.environ.get('DASHSCOPE_API_KEY'), task_id)
+                if status and status.get('output', {}).get('task_status') == 'SUCCEEDED':
+                    image_url = status['output']['results'][0].get('url')
+                    if image_url:
+                        from pathlib import Path
+                        from datetime import datetime
+                        today = datetime.now().strftime('%Y%m%d')
+                        output_dir = Path('/root/.openclaw/workspace/agents/designer/output') / f'aliyun_{today}'
+                        output_dir.mkdir(parents=True, exist_ok=True)
+                        output_path = output_dir / f'aliyun_image_{seed or "001"}.png'
+                        if download_image(image_url, output_path):
+                            print(f"✅ 已保存: {output_path}")
+                    break
     else:
         from generate_zhipu import generate_image
         generate_image(final_prompt, '1024x1024', seed)
