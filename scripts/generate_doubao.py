@@ -13,14 +13,15 @@ from pathlib import Path
 from datetime import datetime
 import time
 
-def generate_doubao_image(api_key, prompt, model="doubao-seedream-4-0-250828", size="1024x1024"):
+def generate_doubao_image(api_key, prompt, model="doubao-seedream-5-0-260128", size="1024x1024"):
     """
     使用火山引擎 Ark API 生成图像
-    默认使用 Doubao-Seedream-4.5 模型
+    默认使用 Doubao-Seedream-5.0 模型
     
     支持模型:
-    - doubao-seedream-4-0-250828 (Seedream 4.5)
-    - doubao-seedream-3-0-250828 (Seedream 3.0)
+    - doubao-seedream-5-0-260128 (Seedream 5.0, 最新推荐)
+    - doubao-seedream-4-5-251128 (Seedream 4.5)
+    - doubao-seedream-4-0-250828 (Seedream 4.0)
     """
     
     # 火山引擎 Ark API 端点
@@ -98,7 +99,7 @@ def main():
     # Load API key from environment
     load_env()
     api_key = os.environ.get('VOLCENGINE_API_KEY')
-    model = os.environ.get('VOLCENGINE_DEFAULT_MODEL', 'doubao-seedream-4-0-250828')
+    model = os.environ.get('VOLCENGINE_DEFAULT_MODEL', 'doubao-seedream-5-0-260128')
     
     if not api_key:
         print("❌ Error: VOLCENGINE_API_KEY not found in .env file")
