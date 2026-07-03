@@ -49,7 +49,8 @@ You need at least one of the following API keys:
 - Register at https://console.volcengine.com/ark
 - Get API key from: 控制台 → 密钥管理 → 创建 API Key
 - ⚠️ **Important**: API keys typically start with `ark-` (e.g., `ark-xxxxxxxx`)
-- **Doubao-Seedream-4.5**: 字节跳动最新文生图模型，中文理解优秀，细节丰富
+- **Doubao-Seedream-5.0** (`doubao-seedream-5-0-260128`): 字节跳动最新文生图模型，当前推荐
+- **Doubao-Seedream-4.5** (`doubao-seedream-4-5-251128`): 上一代模型，同样优秀
 - Free tier available for new users
 
 ### Configuration
@@ -75,8 +76,9 @@ DASHSCOPE_API_KEY=your_dashscope_key_here
 # Volcengine Ark (火山引擎 Doubao-Seedream)
 # Get from: https://console.volcengine.com/ark
 # IMPORTANT: API keys typically start with 'ark-'
+# Recommended: doubao-seedream-5-0-260128 (latest), doubao-seedream-4-5-251128
 VOLCENGINE_API_KEY=your_volcengine_key_here
-VOLCENGINE_DEFAULT_MODEL=doubao-seedream-4-5-251128
+VOLCENGINE_DEFAULT_MODEL=doubao-seedream-5-0-260128
 ```
 
 Or set environment variables:
@@ -86,6 +88,7 @@ export ZHIPU_API_KEY=your_key
 export MODELSCOPE_API_KEY=your_key
 export DASHSCOPE_API_KEY=your_key
 export VOLCENGINE_API_KEY=your_key
+export VOLCENGINE_DEFAULT_MODEL=doubao-seedream-5-0-260128
 ```
 
 ## Usage
@@ -127,7 +130,7 @@ openclaw run image-gen-skill -i
 
 | API | 擅长 | 优势 | 劣势 |
 |-----|------|------|------|
-| **Volcengine (Doubao-Seedream-4.5) ⭐推荐** | 通用场景、中文理解 | ⭐ 最新模型、细节丰富、中文提示优秀、响应快 | 需火山引擎账号 |
+| **Volcengine (Doubao-Seedream-5.0) ⭐推荐** | 通用场景、中文理解 | ⭐ 最新模型、细节丰富、中文提示优秀、响应快 | 需火山引擎账号 |
 | **SiliconFlow (Kolors)** | 写实人像、产品摄影 | 照片级真实感、皮肤质感细腻 | 插画风格一般 |
 | **智谱 AI (CogView)** | 插画、概念图、中文提示 | 中文理解好、艺术风格强 | 写实程度一般 |
 | **ModelScope (FLUX.1)** | 高质量艺术图、细节丰富 | 免费额度大(2000/天)、FLUX.1质量高 | 需异步轮询、需实名认证 |
